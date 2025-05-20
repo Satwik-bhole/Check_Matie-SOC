@@ -15,5 +15,7 @@ for l in range (2,n+1):
 total_diff=dp[0][n-1]
 if total_diff>0:
     print("Player 1 wins")
+elif total_diff==0:
+    print("Its a draw")
 else:
     print("Player 2 wins")
