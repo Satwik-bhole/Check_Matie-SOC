@@ -107,10 +107,6 @@ class History:
 
 
 def backward_induction(history_obj, alpha=-math.inf, beta=math.inf):
-    """
-    :param history_obj: History class object
-    :return: best achievable utility (float) for the current history_obj
-    """
     global strategy_dict_x, strategy_dict_o
 
     if history_obj.is_terminal_history():
@@ -118,42 +114,39 @@ def backward_induction(history_obj, alpha=-math.inf, beta=math.inf):
 
     current_player = history_obj.player
     valid_actions = history_obj.get_valid_actions()
-
     best_utility = -math.inf if current_player == 'x' else math.inf
     best_actions = []
 
     for action in valid_actions:
         next_history = history_obj.update_history(action)
-        utility = backward_induction(next_history)
+        utility = backward_induction(next_history, alpha, beta)
 
         if current_player == 'x':
             if utility > best_utility:
                 best_utility = utility
                 best_actions = [action]
+                alpha = max(alpha, best_utility)
+                if best_utility == 1:
+                    break
             elif utility == best_utility:
                 best_actions.append(action)
-            
-            alpha = max(alpha, best_utility)
-            if beta <= alpha:
-                break
-        else:  
+        else:
             if utility < best_utility:
                 best_utility = utility
                 best_actions = [action]
+                beta = min(beta, best_utility)
+                if best_utility == -1:
+                    break
             elif utility == best_utility:
                 best_actions.append(action)
-            
-            beta = min(beta, best_utility)
-            if beta <= alpha:
-                break
+        
+        if alpha >= beta:
+            break
 
-    policy = {str(a): 0.0 for a in range(9)}
-    prob = 1.0 / len(best_actions) if best_actions else 0.0
-    for a in best_actions:
-        policy[str(a)] = prob
-
-    key = ''.join(str(x) for x in history_obj.history)
-
+    policy = {str(a): 1.0/len(best_actions) if a in best_actions else 0.0 
+              for a in range(9)}
+    
+    key = ''.join(map(str, history_obj.history))
     if current_player == 'x':
         strategy_dict_x[key] = policy
     else:
