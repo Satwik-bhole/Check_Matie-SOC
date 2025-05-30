@@ -106,7 +106,7 @@ class History:
         return History(new_history)
 
 
-def backward_induction(history_obj, alpha=-math.inf, beta=math.inf):
+def backward_induction(history_obj):
     global strategy_dict_x, strategy_dict_o
 
     if history_obj.is_terminal_history():
@@ -119,41 +119,31 @@ def backward_induction(history_obj, alpha=-math.inf, beta=math.inf):
 
     for action in valid_actions:
         next_history = history_obj.update_history(action)
-        utility = backward_induction(next_history, alpha, beta)
+        utility = backward_induction(next_history)
 
         if current_player == 'x':
             if utility > best_utility:
                 best_utility = utility
                 best_actions = [action]
-                alpha = max(alpha, best_utility)
-                if best_utility == 1:
-                    break
             elif utility == best_utility:
                 best_actions.append(action)
-        else:
+        else:  # 'o' player
             if utility < best_utility:
                 best_utility = utility
                 best_actions = [action]
-                beta = min(beta, best_utility)
-                if best_utility == -1:
-                    break
             elif utility == best_utility:
                 best_actions.append(action)
-        
-        if alpha >= beta:
-            break
 
-    policy = {str(a): 1.0/len(best_actions) if a in best_actions else 0.0 
-              for a in range(9)}
+    # Store strategy (even if pruning would have happened)
+    history_key = ''.join(map(str, history_obj.history))
+    policy = {str(a): 1.0/len(best_actions) if a in best_actions else 0.0 for a in range(9)}
     
-    key = ''.join(map(str, history_obj.history))
     if current_player == 'x':
-        strategy_dict_x[key] = policy
+        strategy_dict_x[history_key] = policy
     else:
-        strategy_dict_o[key] = policy
+        strategy_dict_o[history_key] = policy
 
     return best_utility
-
 
     # return -2
     # TODO implement
