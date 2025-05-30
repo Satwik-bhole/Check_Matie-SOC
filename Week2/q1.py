@@ -106,7 +106,7 @@ class History:
         return History(new_history)
 
 
-def backward_induction(history_obj):
+def backward_induction(history_obj, alpha=-math.inf, beta=math.inf):
     """
     :param history_obj: History class object
     :return: best achievable utility (float) for the current history_obj
@@ -132,12 +132,20 @@ def backward_induction(history_obj):
                 best_actions = [action]
             elif utility == best_utility:
                 best_actions.append(action)
+            
+            alpha = max(alpha, best_utility)
+            if beta <= alpha:
+                break
         else:  
             if utility < best_utility:
                 best_utility = utility
                 best_actions = [action]
             elif utility == best_utility:
                 best_actions.append(action)
+            
+            beta = min(beta, best_utility)
+            if beta <= alpha:
+                break
 
     policy = {str(a): 0.0 for a in range(9)}
     prob = 1.0 / len(best_actions) if best_actions else 0.0
