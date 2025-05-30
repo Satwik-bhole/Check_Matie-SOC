@@ -18,7 +18,6 @@ winning_lines = [
     [0, 4, 8], [2, 4, 6]               # diagonals
 ]
 
-# Precomputed square-to-line mappings for quick access
 square_to_lines = {}
 for square in range(9):
     square_to_lines[square] = []
@@ -26,7 +25,6 @@ for square in range(9):
         if square in line:
             square_to_lines[square].append(line)
 def is_completing_three(board_state, pos):
-    """Check if placing 'x' at `pos` completes a three-in-a-row."""
     for line in square_to_lines[pos]:
         count = 0
         for square in line:
