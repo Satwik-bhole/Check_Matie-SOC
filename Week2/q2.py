@@ -12,6 +12,31 @@ board_positions_val_dict = {}
 # Global variable to store the visited histories in the process of alpha beta pruning.
 visited_histories_list = []
 
+winning_lines = [
+    [0, 1, 2], [3, 4, 5], [6, 7, 8],  # rows
+    [0, 3, 6], [1, 4, 7], [2, 5, 8],  # columns
+    [0, 4, 8], [2, 4, 6]               # diagonals
+]
+
+# Precomputed square-to-line mappings for quick access
+square_to_lines = {}
+for square in range(9):
+    square_to_lines[square] = []
+    for line in winning_lines:
+        if square in line:
+            square_to_lines[square].append(line)
+def is_completing_three(board_state, pos):
+    """Check if placing 'x' at `pos` completes a three-in-a-row."""
+    for line in square_to_lines[pos]:
+        count = 0
+        for square in line:
+            if square == pos:
+                continue
+            if board_state[square] == 'x':
+                count += 1
+        if count == 2:
+            return True
+    return False
 
 class History:
     def __init__(self, num_boards=2, history=None):
@@ -159,20 +184,30 @@ class History:
         return boards_str
 
     def is_win(self):
-        # Feel free to implement this in anyway if needed
-        pass
+        for board in self.boards:
+            if self.is_board_win(board):
+                return True
+        return False
 
     def get_valid_actions(self):
-        # Feel free to implement this in anyway if needed
-        pass
+        valid_actions=[]
+        for board_num in range(self.num_boards):
+            if self.active_board_stats[board_num]==1:
+                for pos in range(9):
+                    if self.boards[board_num][pos] == '0':
+                        valid_actions.append(board_num * 9 + pos)
+        return valid_actions
 
     def is_terminal_history(self):
-        # Feel free to implement this in anyway if needed
-        pass
+        return self.is_win()
 
     def get_value_given_terminal_history(self):
-        # Feel free to implement this in anyway if needed
-        pass
+        if not self.is_terminal_history():
+            return None
+        if len(self.history) % 2 == 1:
+            return -1  
+        else:
+            return 1
 
 
 def alpha_beta_pruning(history_obj, alpha, beta, max_player_flag):
@@ -186,11 +221,75 @@ def alpha_beta_pruning(history_obj, alpha, beta, max_player_flag):
     :param max_player_flag: Bool (True if maximizing player plays)
     :return: float
     """
-    # These two already given lines track the visited histories.
-    global visited_histories_list
+    # These two already given lines track the visited histories
+    global visited_histories_list, board_positions_val_dict
     visited_histories_list.append(history_obj.history)
+    
+    # Check transposition table
+    board_key = history_obj.get_boards_str()
+    if board_key in board_positions_val_dict:
+        return board_positions_val_dict[board_key]
+    
+    if history_obj.is_terminal_history():
+        val = history_obj.get_value_given_terminal_history()
+        board_positions_val_dict[board_key] = val
+        return val
+        
+    valid_actions = history_obj.get_valid_actions()
+    if not valid_actions:
+        board_positions_val_dict[board_key] = 0
+        return 0
+
+    
+    non_losing, losing = [], [] # Move ordering: separate losing vs non-losing moves
+    for action in valid_actions:
+        board_num = action // 9
+        pos = action % 9
+        if is_completing_three(history_obj.boards[board_num], pos):
+            losing.append(action)
+        else:
+            non_losing.append(action)
+    
+    def action_priority(a):
+        pos = a % 9
+        if pos == 4:  # Center
+            return 0
+        elif pos in {0, 2, 6, 8}:  # Corners
+            return 1
+        else:  # Edges
+            return 2
+    
+    non_losing.sort(key=action_priority)
+    losing.sort(key=action_priority)
+    ordered_actions = non_losing + losing
+    
+    if max_player_flag:
+        value = -math.inf
+        for action in ordered_actions:
+            new_hist = copy.deepcopy(history_obj.history)
+            new_hist.append(action)
+            child = History(history_obj.num_boards, new_hist)
+            value = max(value, alpha_beta_pruning(child, alpha, beta, False))
+            alpha = max(alpha, value)
+            if alpha >= beta:
+                break
+        board_positions_val_dict[board_key] = value
+        return value
+    else:
+        value = math.inf
+        for action in ordered_actions:
+            new_hist = copy.deepcopy(history_obj.history)
+            new_hist.append(action)
+            child = History(history_obj.num_boards, new_hist)
+            value = min(value, alpha_beta_pruning(child, alpha, beta, True))
+            beta = min(beta, value)
+            if alpha >= beta:
+                break
+        board_positions_val_dict[board_key] = value
+        return value
+
     # TODO implement
-    return -2
+    #return -2
     # TODO implement
 
 
@@ -206,8 +305,40 @@ def maxmin(history_obj, max_player_flag):
     # self.boards and value represents the maxmin value. Use the get_boards_str function in History class to get
     # the key corresponding to self.boards.
     global board_positions_val_dict
+    board_key = history_obj.get_boards_str()
+    if board_key in board_positions_val_dict:
+        return board_positions_val_dict[board_key]
+        
+    if history_obj.is_terminal_history():
+        val = history_obj.get_value_given_terminal_history()
+        board_positions_val_dict[board_key] = val
+        return val
+        
+    valid_actions = history_obj.get_valid_actions()
+    if not valid_actions:
+        board_positions_val_dict[board_key] = 0
+        return 0
+        
+    if max_player_flag:
+        value = -math.inf
+        for action in valid_actions:
+            new_hist = copy.deepcopy(history_obj.history)
+            new_hist.append(action)
+            child = History(history_obj.num_boards, new_hist)
+            value = max(value, maxmin(child, False))
+        board_positions_val_dict[board_key] = value
+        return value
+    else:
+        value = math.inf
+        for action in valid_actions:
+            new_hist = copy.deepcopy(history_obj.history)
+            new_hist.append(action)
+            child = History(history_obj.num_boards, new_hist)
+            value = min(value, maxmin(child, True))
+        board_positions_val_dict[board_key] = value
+        return value
     # TODO implement
-    return -2
+    #return -2
     # TODO implement
 
 
