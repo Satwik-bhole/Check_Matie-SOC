@@ -23,14 +23,15 @@ These techniques collectively form the decision-making core of the engine.
 🚀 Future Plans
 1. Optimizations and Speed Improvements
 I plan to further optimize the engine by reducing unnecessary computations using:
+
    1)Parallelization/multithreading (if needed)
 
-2. NNUE Integration
+3. NNUE Integration
 I aim to implement NNUE (Efficiently Updatable Neural Network Evaluation), inspired by modern engines like Stockfish. NNUE will:
    1) Replace or augment heuristic evaluation
    2) Be trained on position-score pairs to evaluate positions more accurately
 
-3. Reinforcement Learning
+4. Reinforcement Learning
 I plan to explore Reinforcement Learning methods such as:
    1) Q-Learning
    2) Self-play to iteratively improve evaluation
