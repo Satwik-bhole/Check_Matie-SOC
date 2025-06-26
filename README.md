@@ -23,8 +23,7 @@ These techniques collectively form the decision-making core of the engine.
 🚀 Future Plans
 1. Optimizations and Speed Improvements
 I plan to further optimize the engine by reducing unnecessary computations using:
-
-   1)Parallelization/multithreading (if needed)
+   1) Parallelization/multithreading (if needed)
 
 3. NNUE Integration
 I aim to implement NNUE (Efficiently Updatable Neural Network Evaluation), inspired by modern engines like Stockfish. NNUE will:
